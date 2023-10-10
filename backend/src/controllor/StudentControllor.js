@@ -234,25 +234,29 @@ exports.studentFindAll = async (req, res) => {
         });
       }
     });
+    aggregation.push({
+      $sort:{"StudentName.FirstName":1},
+    })
 
     const [result] = await Student.aggregate([
       ...aggregation,
       {
         $group: {
-          _id: null,
+          _id:null,
           count: { $sum: 1 },
           data: { $push: "$$ROOT" },
         },
       },
+      
     ]);
 
     const { data = [], count = 0 } = result || {};
 
     res.status(200).json({
       status: StatusCodes.OK,
-      data,
       totalCount: count,
       message: "Student details Found",
+      data,
     });
   } catch (error) {
     return res.status(500).json({
