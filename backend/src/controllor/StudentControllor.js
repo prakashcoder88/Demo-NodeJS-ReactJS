@@ -217,17 +217,18 @@ exports.studentFindAll = async (req, res) => {
       "StudentName.FirstName": req.query.FirstName,
       "StudentName.LastName": req.query.LastName,
       "Address.State": req.query.State,
+      "Address.City": req.query.City,
       Class: req.query.Class,
       BranchName: req.query.BranchName,
       Gender: req.query.Gender,
       Category: req.query.Category,
     };
 
-    const aggregationPipeline = [];
+    const aggregation = [];
 
     Object.keys(filters).forEach((key) => {
       if (filters[key]) {
-        aggregationPipeline.push({
+        aggregation.push({
        
           $match: { [key]: filters[key] },
         });
@@ -235,7 +236,7 @@ exports.studentFindAll = async (req, res) => {
     });
 
     const [result] = await Student.aggregate([
-      ...aggregationPipeline,
+      ...aggregation,
       {
         $group: {
           _id: null,
