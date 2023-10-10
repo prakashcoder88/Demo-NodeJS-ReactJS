@@ -240,6 +240,7 @@ exports.studentFindAll = async (req, res) => {
 
     const [result] = await Student.aggregate([
       ...aggregation,
+      {$project:{CourseName:1}},
       {
         $group: {
           _id:null,
