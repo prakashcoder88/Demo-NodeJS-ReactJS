@@ -226,11 +226,11 @@ exports.studentFindAll = async (req, res) => {
 
     const aggregation = [];
 
-    Object.keys(filters).forEach((key) => {
-      if (filters[key]) {
+    Object.keys(filters).forEach((value) => {
+      if (filters[value]) {
         aggregation.push({
        
-          $match: { [key]: filters[key] },
+          $match: { [value]: filters[value] },
         });
       }
     });
