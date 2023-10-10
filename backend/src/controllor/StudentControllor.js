@@ -200,6 +200,67 @@ exports.studentFind = async (req, res) => {
   }
 };
 
+
+exports.studentFindAll = async (req, res) => {
+  try {
+    const token = req.headers.authorization;
+
+    if (blockTokens.has(token)) {
+      return res.status(401).json({
+        status: StatusCodes.UNAUTHORIZED,
+        message: "admin logged out.",
+      });
+    }
+
+    const filters = {
+      CourseName: req.query.CourseName,
+      "StudentName.FirstName": req.query.FirstName,
+      "StudentName.LastName": req.query.LastName,
+      "Address.State": req.query.State,
+      Class: req.query.Class,
+      BranchName: req.query.BranchName,
+      Gender: req.query.Gender,
+      Category: req.query.Category,
+    };
+
+    const aggregationPipeline = [];
+
+    Object.keys(filters).forEach((key) => {
+      if (filters[key]) {
+        aggregationPipeline.push({
+          $match: { [key]: filters[key] },
+        });
+      }
+    });
+
+    const [result] = await Student.aggregate([
+      ...aggregationPipeline,
+      {
+        $group: {
+          _id: null,
+          count: { $sum: 1 },
+          data: { $push: "$$ROOT" },
+        },
+      },
+    ]);
+
+    const { data = [], count = 0 } = result || {};
+
+    res.status(200).json({
+      status: StatusCodes.OK,
+      data,
+      totalCount: count,
+      message: "admin Found",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      error: true,
+      message: MessageRespons.internal_server_error,
+    });
+  }
+};
+
 exports.studentLogout = async (req, res) => {
   const token = req.headers.authorization;
 
