@@ -208,7 +208,7 @@ exports.studentFindAll = async (req, res) => {
     if (blockTokens.has(token)) {
       return res.status(401).json({
         status: StatusCodes.UNAUTHORIZED,
-        message: "admin logged out.",
+        message: "User logged out.",
       });
     }
 
@@ -250,7 +250,7 @@ exports.studentFindAll = async (req, res) => {
       status: StatusCodes.OK,
       data,
       totalCount: count,
-      message: "admin Found",
+      message: "Student details Found",
     });
   } catch (error) {
     return res.status(500).json({
