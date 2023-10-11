@@ -307,3 +307,132 @@ exports.studentDelete = async (req, res) => {
     });
   }
 };
+exports.studentUpdate = async (req, res) => {
+  try {
+    let { Email, phone } = req.body;
+
+    const studentEmail = Email ? Email.toLowerCase() : undefined;
+
+    const checkemail = await Student.findOne({
+      Email,
+      _id: { $ne:  req.decodedstudent },
+    });
+    const checkphone = await Student.findOne({
+      phone,
+      _id: { $ne:  req.decodedstudent },
+    });
+
+    if (checkemail || checkphone) {
+      const message = checkemail
+        ? MessageRespons.checkemail
+        : MessageRespons.checkphone;
+
+      res.status(400).json({
+        status: StatusCodes.BAD_REQUEST,
+        message,
+      });
+    } else {
+      created = moment(Date.now()).format("LLL");
+      const { _id } =  req.decodedstudent;
+
+      const student = await Student.findById(_id);
+
+      if (!student) {
+        return res.status(404).json({
+          status: 404,
+          message: "User Credential Invalied",
+        });
+      } else {
+        let student = {
+          Email: studentEmail,
+          phone,
+          document: req.documentUrl,
+          created,
+        };
+
+        const UserUpdate = await Student.findByIdAndUpdate(
+          { _id },
+          { $set: student },
+          { new: true }
+        );
+
+        return res.status(201).json({
+          status: StatusCodes.CREATED,
+          message: MessageRespons.created,
+        });
+      }
+    }
+  } catch (error) {
+    return res.status(500).json({
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: MessageRespons.internal_server_error,
+    });
+  }
+};
+
+exports.ChangePassword = async (req, res) =>{
+  try {
+    const userId = req.decodedstudent
+    const student = await Student.findOne({_id:userId})
+    let {oldpassword, newpassword, confirmpassword} = req.body
+
+    if(!oldpassword || !newpassword || !confirmpassword){
+    return res.status(403).json({
+      status:StatusCodes.FORBIDDEN,
+      message:"Filed are required"
+    })
+    }else if(!validatePassword(password)){
+      return res.status(400).json({
+        status:StatusCodes.BAD_REQUEST,
+        message:"Password not Validate"
+      })
+    }else if(newpassword !== confirmpassword){
+      return res.status(400).json({
+        status:StatusCodes.BAD_REQUEST,
+        message: "new and confirm password not match"
+      })
+    }else{
+      const samePassword = await bcrypt.compare(oldpassword, student.password)
+      
+      if(!samePassword){
+        return res.status(400).json({
+          status:StatusCodes.BAD_REQUEST,
+          message:"Old password not match"
+        })
+      }else{
+        const newSamePassword = await bcrypt.compare(newpassword, student.password)
+        
+        if(newSamePassword){
+          return res.status(400).json({
+            status:StatusCodes.BAD_REQUEST,
+            message: "New and old password are same"
+          })
+        }
+        else {
+          const passwordHash = await passwordencrypt(
+            newpassword,
+            student.password
+          );
+
+          const studentUpdate = await Student.findByIdAndUpdate(
+            { _id: student._id },
+            { $set: { password: passwordHash } },
+            { new: true }
+          );
+
+          return res.status(200).json({
+            status: StatusCodes.OK,
+            studentUpdate,
+            message: "Password successfully change",
+          });
+        }
+      }
+    }
+    
+  } catch (error) {
+    return res.status(500).json({
+      status: StatusCodes.INTERNAL_SERVER_ERROR,
+      message: MessageRespons.internal_server_error,
+    });
+  }
+}
